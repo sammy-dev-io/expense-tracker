@@ -6,11 +6,13 @@ import {
   Button,
   Typography,
   Alert,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
 
 interface LoginProps {
-  // Lets the parent switch over to the Register page when the user clicks the link
   onSwitchToRegister: () => void;
 }
 
@@ -19,6 +21,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -29,11 +32,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
 
     try {
       await login(email, password);
-      // No need to redirect manually - App.tsx watches whether "user" exists
-      // in AuthContext, and automatically swaps to the main app once it does.
     } catch (err: any) {
-      // err.response.data.message is the exact error message our backend sent,
-      // e.g. "Invalid email or password"
       setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
@@ -75,11 +74,25 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
           />
           <TextField
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             fullWidth
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
           <Button
             type="submit"

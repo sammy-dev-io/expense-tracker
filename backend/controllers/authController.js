@@ -28,6 +28,30 @@ exports.register = async (req, res) => {
       });
     }
 
+    // Basic email format check - not perfect (no regex can PERFECTLY validate
+    // every real email address), but catches obvious mistakes like missing
+    // "@" or missing domain. This does NOT confirm the email actually exists
+    // or is reachable - only that it's shaped like a real email.
+    const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRule.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address",
+      });
+    }
+
+    // Password rule: at least 8 characters, at least one letter, at least
+    // one number. This regex uses "lookaheads" - (?=...) checks a condition
+    // exists somewhere ahead, without consuming characters itself.
+    const passwordRule = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+    if (!passwordRule.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 8 characters and include at least one letter and one number",
+      });
+    }
+
     // Check if someone already registered with this email
     const existingUser = await User.findOne({ email });
     if (existingUser) {

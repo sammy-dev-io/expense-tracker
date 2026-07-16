@@ -1,7 +1,3 @@
-// This is the "parent" component - it now does one more job besides
-// managing expenses: deciding WHICH screen to show, based on whether
-// someone is logged in or not.
-
 import { useEffect, useState } from "react";
 import {
   Container,
@@ -10,9 +6,14 @@ import {
   Paper,
   Alert,
   Button,
+  Tabs,
+  Tab,
+  Grid,
 } from "@mui/material";
 import ExpenseForm from "./components/ExpenseForm";
 import ExpenseList from "./components/ExpenseList";
+import IncomeForm from "./components/IncomeForm";
+import IncomeList from "./components/IncomeList";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
@@ -24,20 +25,28 @@ import {
   type Expense,
   type NewExpense,
 } from "./api/expenseApi";
+import {
+  getIncome,
+  createIncome,
+  deleteIncome,
+  type Income,
+  type NewIncome,
+} from "./api/incomeApi";
 
 function App() {
   const { user, logout } = useAuth();
-
-  // Tracks whether we're showing the Login screen or the Register screen,
-  // for whenever "user" is null (nobody logged in yet).
   const [showRegister, setShowRegister] = useState(false);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [income, setIncome] = useState<Income[]>([]);
   const [error, setError] = useState("");
+
+  // "tab" tracks which section is currently visible: 0 = Expenses, 1 = Income.
+  // Using a number here matches how MUI's <Tabs> component works internally.
+  const [tab, setTab] = useState(0);
 
   const loadExpenses = async () => {
     try {
-      setError("");
       const data = await getExpenses();
       setExpenses(data);
     } catch (err) {
@@ -46,20 +55,27 @@ function App() {
     }
   };
 
-  // IMPORTANT: this now depends on [user] instead of running only once.
-  // Every time "user" changes (e.g. someone just logged in), this re-runs
-  // and fetches THAT person's expenses fresh.
+  const loadIncome = async () => {
+    try {
+      const data = await getIncome();
+      setIncome(data);
+    } catch (err) {
+      console.error(err);
+      setError("Could not load income. Is your backend running?");
+    }
+  };
+
   useEffect(() => {
     if (user) {
       loadExpenses();
+      loadIncome();
     } else {
-      // If nobody's logged in (e.g. just logged out), clear the list -
-      // otherwise the previous user's data would flash on screen briefly.
       setExpenses([]);
+      setIncome([]);
     }
   }, [user]);
 
-  const handleAdd = async (newExpense: NewExpense) => {
+  const handleAddExpense = async (newExpense: NewExpense) => {
     try {
       setError("");
       await createExpense(newExpense);
@@ -70,7 +86,7 @@ function App() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteExpense = async (id: string) => {
     try {
       setError("");
       await deleteExpense(id);
@@ -81,7 +97,7 @@ function App() {
     }
   };
 
-  const handleUpdate = async (id: string, updates: NewExpense) => {
+  const handleUpdateExpense = async (id: string, updates: NewExpense) => {
     try {
       setError("");
       await updateExpense(id, updates);
@@ -92,9 +108,35 @@ function App() {
     }
   };
 
-  const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const handleAddIncome = async (newIncome: NewIncome) => {
+    try {
+      setError("");
+      await createIncome(newIncome);
+      loadIncome();
+    } catch (err) {
+      console.error(err);
+      setError("Could not add income.");
+    }
+  };
 
-  // ----- GATE: if nobody's logged in, show Login or Register instead -----
+  const handleDeleteIncome = async (id: string) => {
+    try {
+      setError("");
+      await deleteIncome(id);
+      loadIncome();
+    } catch (err) {
+      console.error(err);
+      setError("Could not delete income.");
+    }
+  };
+
+  // Both totals are derived (calculated fresh) from state every render -
+  // never stored separately, so they can never drift out of sync with
+  // the actual list of expenses/income.
+  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalIncome = income.reduce((sum, i) => sum + i.amount, 0);
+  const balance = totalIncome - totalExpenses;
+
   if (!user) {
     return showRegister ? (
       <Register onSwitchToLogin={() => setShowRegister(false)} />
@@ -103,7 +145,6 @@ function App() {
     );
   }
 
-  // ----- Below here only ever renders once "user" exists -----
   return (
     <Container maxWidth="md" sx={{ py: 5 }}>
       <Box
@@ -133,24 +174,75 @@ function App() {
         </Alert>
       )}
 
-      <Paper elevation={2} sx={{ p: 3, mb: 3, mt: 3, background: "#f5f5f5" }}>
-        <Typography variant="subtitle2" color="text.secondary">
-          Total Spent
-        </Typography>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          ₦{total.toLocaleString()}
-        </Typography>
-      </Paper>
+      {/* Summary row: three side-by-side boxes showing Income, Expenses, Balance */}
+      <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
+        <Grid size={4}>
+          <Paper elevation={2} sx={{ p: 2, background: "#e8f5e9" }}>
+            <Typography variant="caption" color="text.secondary">
+              Total Income
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              ₦{totalIncome.toLocaleString()}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={4}>
+          <Paper elevation={2} sx={{ p: 2, background: "#ffebee" }}>
+            <Typography variant="caption" color="text.secondary">
+              Total Expenses
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              ₦{totalExpenses.toLocaleString()}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={4}>
+          <Paper
+            elevation={2}
+            sx={{ p: 2, background: balance >= 0 ? "#e3f2fd" : "#fff3e0" }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              Balance
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              ₦{balance.toLocaleString()}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
 
-      <ExpenseForm onAdd={handleAdd} />
+      {/* Tabs let the user switch between managing Expenses and Income,
+          without needing two separate pages/routes for something this simple. */}
+      <Tabs
+        value={tab}
+        onChange={(_, newValue) => setTab(newValue)}
+        sx={{ mb: 3 }}
+      >
+        <Tab label="Expenses" />
+        <Tab label="Income" />
+      </Tabs>
 
-      <Box sx={{ mt: 3 }}>
-        <ExpenseList
-          expenses={expenses}
-          onDelete={handleDelete}
-          onUpdate={handleUpdate}
-        />
-      </Box>
+      {tab === 0 && (
+        <>
+          <ExpenseForm onAdd={handleAddExpense} />
+          <Box sx={{ mt: 3 }}>
+            <ExpenseList
+              expenses={expenses}
+              onDelete={handleDeleteExpense}
+              onUpdate={handleUpdateExpense}
+            />
+          </Box>
+        </>
+      )}
+
+      {tab === 1 && (
+        <>
+          <IncomeForm onAdd={handleAddIncome} />
+          <Box sx={{ mt: 3 }}>
+            <IncomeList income={income} onDelete={handleDeleteIncome} />
+          </Box>
+        </>
+      )}
     </Container>
   );
 }

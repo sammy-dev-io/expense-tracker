@@ -6,12 +6,21 @@ import {
   Button,
   Typography,
   Alert,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
 
 interface RegisterProps {
   onSwitchToLogin: () => void;
 }
+
+// Same rule as the backend - checked here too so the user gets INSTANT
+// feedback without waiting on a network request. The backend still
+// re-checks this itself, since frontend checks can always be bypassed.
+const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const EMAIL_RULE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
   const { register } = useAuth();
@@ -19,6 +28,7 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,8 +36,15 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
     e.preventDefault();
     setError("");
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!EMAIL_RULE.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    if (!PASSWORD_RULE.test(password)) {
+      setError(
+        "Password must be at least 8 characters and include at least one letter and one number"
+      );
       return;
     }
 
@@ -84,12 +101,26 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
           />
           <TextField
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             fullWidth
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            helperText="At least 6 characters"
+            helperText="At least 8 characters, with a letter and a number"
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
           <Button
             type="submit"
