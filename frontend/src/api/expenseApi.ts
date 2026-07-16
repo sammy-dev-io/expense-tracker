@@ -41,3 +41,11 @@ export const createExpense = async (expense: NewExpense): Promise<Expense> => {
 export const deleteExpense = async (id: string): Promise<void> => {
   await axios.delete(`${API_BASE_URL}/${id}`);
 };
+
+export const updateExpense = async (
+  id: string,
+  updates: NewExpense
+): Promise<Expense> => {
+  const response = await axios.patch(`${API_BASE_URL}/${id}`, updates);
+  return response.data.expense;
+};

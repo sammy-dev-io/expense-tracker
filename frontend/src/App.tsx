@@ -14,6 +14,7 @@ import {
   getExpenses,
   createExpense,
   deleteExpense,
+  updateExpense,
   type Expense,
   type NewExpense,
 } from "./api/expenseApi";
@@ -65,6 +66,17 @@ function App() {
     }
   };
 
+  const handleUpdate = async (id: string, updates: NewExpense) => {
+    try {
+      setError("");
+      await updateExpense(id, updates);
+      loadExpenses();
+    } catch (err) {
+      console.error(err);
+      setError("Could not update expense.");
+    }
+  };
+
   // Calculate the running total from whatever expenses are currently in state.
   // This is NOT stored separately - it's recalculated every render from the
   // current expenses array, so it's always accurate automatically.
@@ -97,7 +109,11 @@ function App() {
       <ExpenseForm onAdd={handleAdd} />
 
       <Box sx={{ mt: 3 }}>
-        <ExpenseList expenses={expenses} onDelete={handleDelete} />
+        <ExpenseList
+          expenses={expenses}
+          onDelete={handleDelete}
+          onUpdate={handleUpdate}
+        />
       </Box>
     </Container>
   );
