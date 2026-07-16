@@ -14,6 +14,8 @@ import ExpenseForm from "./components/ExpenseForm";
 import ExpenseList from "./components/ExpenseList";
 import IncomeForm from "./components/IncomeForm";
 import IncomeList from "./components/IncomeList";
+import BudgetForm from "./components/BudgetForm";
+import BudgetList from "./components/BudgetList";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
@@ -32,6 +34,7 @@ import {
   type Income,
   type NewIncome,
 } from "./api/incomeApi";
+import { getBudgets, setBudget, deleteBudget, type Budget } from "./api/budgetApi";
 
 function App() {
   const { user, logout } = useAuth();
@@ -39,6 +42,7 @@ function App() {
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [error, setError] = useState("");
 
   // "tab" tracks which section is currently visible: 0 = Expenses, 1 = Income.
@@ -65,13 +69,25 @@ function App() {
     }
   };
 
+  const loadBudgets = async () => {
+    try {
+      const data = await getBudgets();
+      setBudgets(data);
+    } catch (err) {
+      console.error(err);
+      setError("Could not load budgets. Is your backend running?");
+    }
+  };
+
   useEffect(() => {
     if (user) {
       loadExpenses();
       loadIncome();
+      loadBudgets();
     } else {
       setExpenses([]);
       setIncome([]);
+      setBudgets([]);
     }
   }, [user]);
 
@@ -127,6 +143,28 @@ function App() {
     } catch (err) {
       console.error(err);
       setError("Could not delete income.");
+    }
+  };
+
+  const handleSaveBudget = async (category: string, limitAmount: number) => {
+    try {
+      setError("");
+      await setBudget(category, limitAmount);
+      loadBudgets();
+    } catch (err) {
+      console.error(err);
+      setError("Could not save budget.");
+    }
+  };
+
+  const handleDeleteBudget = async (id: string) => {
+    try {
+      setError("");
+      await deleteBudget(id);
+      loadBudgets();
+    } catch (err) {
+      console.error(err);
+      setError("Could not delete budget.");
     }
   };
 
@@ -220,6 +258,7 @@ function App() {
       >
         <Tab label="Expenses" />
         <Tab label="Income" />
+        <Tab label="Budgets" />
       </Tabs>
 
       {tab === 0 && (
@@ -241,6 +280,17 @@ function App() {
           <Box sx={{ mt: 3 }}>
             <IncomeList income={income} onDelete={handleDeleteIncome} />
           </Box>
+        </>
+      )}
+
+      {tab === 2 && (
+        <>
+          <BudgetForm onSave={handleSaveBudget} />
+          <BudgetList
+            budgets={budgets}
+            expenses={expenses}
+            onDelete={handleDeleteBudget}
+          />
         </>
       )}
     </Container>
