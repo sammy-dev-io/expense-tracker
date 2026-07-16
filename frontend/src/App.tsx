@@ -16,6 +16,8 @@ import IncomeForm from "./components/IncomeForm";
 import IncomeList from "./components/IncomeList";
 import BudgetForm from "./components/BudgetForm";
 import BudgetList from "./components/BudgetList";
+import SavingsGoalForm from "./components/SavingsGoalForm";
+import SavingsGoalList from "./components/SavingsGoalList";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
@@ -35,6 +37,13 @@ import {
   type NewIncome,
 } from "./api/incomeApi";
 import { getBudgets, setBudget, deleteBudget, type Budget } from "./api/budgetApi";
+import {
+  getGoals,
+  createGoal,
+  contributeToGoal,
+  deleteGoal,
+  type SavingsGoal,
+} from "./api/savingsGoalApi";
 
 function App() {
   const { user, logout } = useAuth();
@@ -43,6 +52,7 @@ function App() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [error, setError] = useState("");
 
   // "tab" tracks which section is currently visible: 0 = Expenses, 1 = Income.
@@ -79,15 +89,27 @@ function App() {
     }
   };
 
+  const loadGoals = async () => {
+    try {
+      const data = await getGoals();
+      setGoals(data);
+    } catch (err) {
+      console.error(err);
+      setError("Could not load savings goals. Is your backend running?");
+    }
+  };
+
   useEffect(() => {
     if (user) {
       loadExpenses();
       loadIncome();
       loadBudgets();
+      loadGoals();
     } else {
       setExpenses([]);
       setIncome([]);
       setBudgets([]);
+      setGoals([]);
     }
   }, [user]);
 
@@ -165,6 +187,39 @@ function App() {
     } catch (err) {
       console.error(err);
       setError("Could not delete budget.");
+    }
+  };
+
+  const handleAddGoal = async (title: string, targetAmount: number) => {
+    try {
+      setError("");
+      await createGoal(title, targetAmount);
+      loadGoals();
+    } catch (err) {
+      console.error(err);
+      setError("Could not create savings goal.");
+    }
+  };
+
+  const handleContributeToGoal = async (id: string, amount: number) => {
+    try {
+      setError("");
+      await contributeToGoal(id, amount);
+      loadGoals();
+    } catch (err) {
+      console.error(err);
+      setError("Could not add contribution.");
+    }
+  };
+
+  const handleDeleteGoal = async (id: string) => {
+    try {
+      setError("");
+      await deleteGoal(id);
+      loadGoals();
+    } catch (err) {
+      console.error(err);
+      setError("Could not delete savings goal.");
     }
   };
 
@@ -259,6 +314,7 @@ function App() {
         <Tab label="Expenses" />
         <Tab label="Income" />
         <Tab label="Budgets" />
+        <Tab label="Savings Goals" />
       </Tabs>
 
       {tab === 0 && (
@@ -290,6 +346,17 @@ function App() {
             budgets={budgets}
             expenses={expenses}
             onDelete={handleDeleteBudget}
+          />
+        </>
+      )}
+
+      {tab === 3 && (
+        <>
+          <SavingsGoalForm onAdd={handleAddGoal} />
+          <SavingsGoalList
+            goals={goals}
+            onContribute={handleContributeToGoal}
+            onDelete={handleDeleteGoal}
           />
         </>
       )}
