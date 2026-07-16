@@ -6,6 +6,14 @@ const mongoose = require("mongoose");
 
 const expenseSchema = new mongoose.Schema(
   {
+    owner: {
+      // This stores the _id of the User who created this expense.
+      // "ref: User" tells Mongoose this ID points to a document in the User collection -
+      // this is how two separate models get RELATED to each other in MongoDB.
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     title: {
       type: String,       // must be text
       required: true,     // cannot be left empty

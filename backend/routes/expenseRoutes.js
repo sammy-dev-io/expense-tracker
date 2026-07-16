@@ -5,6 +5,8 @@
 const express = require("express");
 const router = express.Router();
 
+const protect = require("../middleware/authMiddleware");
+
 const {
   createExpense,
   getAllExpenses,
@@ -12,12 +14,14 @@ const {
   deleteExpense,
 } = require("../controllers/expenseController");
 
-// Remember: these paths are relative to "/api/expenses"
-// (that prefix was added in server.js: app.use("/api/expenses", expenseRoutes))
+// Adding "protect" as a second argument here means:
+// "before running this route's real function, run protect() first."
+// If protect() calls next(), we continue to the real function below.
+// If protect() sends an error response instead, we never reach it.
 
-router.post("/", createExpense);        // POST   /api/expenses
-router.get("/", getAllExpenses);        // GET    /api/expenses
-router.patch("/:id", updateExpense);    // PATCH  /api/expenses/:id
-router.delete("/:id", deleteExpense);   // DELETE /api/expenses/:id
+router.post("/", protect, createExpense);
+router.get("/", protect, getAllExpenses);
+router.patch("/:id", protect, updateExpense);
+router.delete("/:id", protect, deleteExpense);
 
 module.exports = router;

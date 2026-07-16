@@ -1,10 +1,9 @@
 // This is the entry point of our backend - the file we actually run
 // to start the server. Its job: connect to the database, set up
 // middleware, and tell Express which routes exist.
+
 const dns = require("dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
-
-
 require("dotenv").config(); // loads variables from .env into process.env
 
 const express = require("express");
@@ -12,6 +11,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const expenseRoutes = require("./routes/expenseRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -30,6 +30,7 @@ app.use(express.json());
 // ----- ROUTES -----
 // Any request starting with /api/expenses gets handled by expenseRoutes
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/auth", authRoutes);
 
 // A simple test route, just to confirm the server is alive
 app.get("/", (req, res) => {

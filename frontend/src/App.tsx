@@ -1,15 +1,21 @@
-// This is the "parent" component - it's the one actually responsible for:
-// 1. Fetching expenses from the backend when the page loads
-// 2. Calling the API when the form submits a new expense, or a row is deleted
-// 3. Passing data DOWN to ExpenseForm and ExpenseList as props
-//
-// This pattern (parent fetches/owns data, children just display it and
-// report user actions back up) is one of the most common patterns in React.
+// This is the "parent" component - it now does one more job besides
+// managing expenses: deciding WHICH screen to show, based on whether
+// someone is logged in or not.
 
 import { useEffect, useState } from "react";
-import { Container, Typography, Box, Paper, Alert } from "@mui/material";
+import {
+  Container,
+  Typography,
+  Box,
+  Paper,
+  Alert,
+  Button,
+} from "@mui/material";
 import ExpenseForm from "./components/ExpenseForm";
 import ExpenseList from "./components/ExpenseList";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { useAuth } from "./context/AuthContext";
 import {
   getExpenses,
   createExpense,
@@ -20,10 +26,15 @@ import {
 } from "./api/expenseApi";
 
 function App() {
+  const { user, logout } = useAuth();
+
+  // Tracks whether we're showing the Login screen or the Register screen,
+  // for whenever "user" is null (nobody logged in yet).
+  const [showRegister, setShowRegister] = useState(false);
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [error, setError] = useState("");
 
-  // Fetches the expense list from the backend and stores it in state.
   const loadExpenses = async () => {
     try {
       setError("");
@@ -35,19 +46,23 @@ function App() {
     }
   };
 
-  // useEffect with an empty [] dependency array means:
-  // "run this once, right when the component first appears on screen."
+  // IMPORTANT: this now depends on [user] instead of running only once.
+  // Every time "user" changes (e.g. someone just logged in), this re-runs
+  // and fetches THAT person's expenses fresh.
   useEffect(() => {
-    loadExpenses();
-  }, []);
+    if (user) {
+      loadExpenses();
+    } else {
+      // If nobody's logged in (e.g. just logged out), clear the list -
+      // otherwise the previous user's data would flash on screen briefly.
+      setExpenses([]);
+    }
+  }, [user]);
 
   const handleAdd = async (newExpense: NewExpense) => {
     try {
       setError("");
       await createExpense(newExpense);
-      // After successfully adding, re-fetch the full list so it's up to date.
-      // (A more advanced approach would update state directly without
-      // re-fetching - but re-fetching is simpler to reason about while learning.)
       loadExpenses();
     } catch (err) {
       console.error(err);
@@ -77,27 +92,48 @@ function App() {
     }
   };
 
-  // Calculate the running total from whatever expenses are currently in state.
-  // This is NOT stored separately - it's recalculated every render from the
-  // current expenses array, so it's always accurate automatically.
   const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
+  // ----- GATE: if nobody's logged in, show Login or Register instead -----
+  if (!user) {
+    return showRegister ? (
+      <Register onSwitchToLogin={() => setShowRegister(false)} />
+    ) : (
+      <Login onSwitchToRegister={() => setShowRegister(true)} />
+    );
+  }
+
+  // ----- Below here only ever renders once "user" exists -----
   return (
     <Container maxWidth="md" sx={{ py: 5 }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-        Expense Tracker
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Track what you spend, one expense at a time.
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 1,
+        }}
+      >
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            Expense Tracker
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Welcome back, {user.name}
+          </Typography>
+        </Box>
+        <Button variant="outlined" onClick={logout}>
+          Log Out
+        </Button>
+      </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3, mt: 2 }}>
           {error}
         </Alert>
       )}
 
-      <Paper elevation={2} sx={{ p: 3, mb: 3, background: "#f5f5f5" }}>
+      <Paper elevation={2} sx={{ p: 3, mb: 3, mt: 3, background: "#f5f5f5" }}>
         <Typography variant="subtitle2" color="text.secondary">
           Total Spent
         </Typography>
