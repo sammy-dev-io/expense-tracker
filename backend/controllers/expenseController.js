@@ -5,15 +5,73 @@
 
 const Expense = require("../models/Expense");
 
+// Small helper - given a date, return the SAME day next month.
+// e.g. Jan 15 -> Feb 15. JavaScript's Date object handles the month
+// rollover automatically (setMonth going past 11/December wraps to
+// January of the next year on its own).
+const addOneMonth = (date) => {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + 1);
+  return result;
+};
+
+// This function is the heart of "recurring expenses." It runs every time
+// a user asks for their expense list, and does this:
+// 1. Find every recurring TEMPLATE (isRecurring: true) whose nextDueDate
+//    has already passed.
+// 2. For each one, create a brand new REAL expense entry (a one-off,
+//    isRecurring: false) - this is the "auto-added" transaction the user
+//    actually sees and that counts toward their totals.
+// 3. Push the template's nextDueDate forward by a month (in a loop, in
+//    case the user hasn't opened the app in 2+ months - we don't want to
+//    silently skip a missed month).
+//
+// This approach means we DON'T need a constantly-running background
+// server/cron job (a much more advanced setup) - the "catching up" simply
+// happens the next time the user is actively using the app.
+const processRecurringExpenses = async (ownerId) => {
+  const now = new Date();
+
+  const dueTemplates = await Expense.find({
+    owner: ownerId,
+    isRecurring: true,
+    nextDueDate: { $lte: now },
+  });
+
+  for (const template of dueTemplates) {
+    // Keep generating + advancing until this template's next due date
+    // is safely in the future - handles catching up multiple missed months.
+    while (template.nextDueDate <= now) {
+      await Expense.create({
+        owner: ownerId,
+        title: template.title,
+        amount: template.amount,
+        category: template.category,
+        date: template.nextDueDate,
+        isRecurring: false, // the GENERATED entry is a normal one-off expense
+      });
+
+      template.nextDueDate = addOneMonth(template.nextDueDate);
+    }
+
+    await template.save();
+  }
+};
+
 exports.createExpense = async (req, res) => {
   try {
-    // We combine the form data (req.body) with the owner id (req.userId) -
-    // the frontend never sends the owner itself, we set it here ourselves,
-    // so a user can never create an expense pretending to be someone else.
-    const expense = await Expense.create({
+    const expenseData = {
       ...req.body,
       owner: req.userId,
-    });
+    };
+
+    // If the user is creating this as a recurring template, calculate
+    // when it should FIRST auto-generate: one month from today.
+    if (expenseData.isRecurring) {
+      expenseData.nextDueDate = addOneMonth(new Date());
+    }
+
+    const expense = await Expense.create(expenseData);
 
     res.status(201).json({
       success: true,
@@ -30,8 +88,10 @@ exports.createExpense = async (req, res) => {
 
 exports.getAllExpenses = async (req, res) => {
   try {
-    // ONLY find expenses belonging to the logged-in user - this is the
-    // single most important line in this whole file.
+    // Catch up on any due recurring expenses BEFORE fetching the list,
+    // so newly generated entries show up immediately in this same request.
+    await processRecurringExpenses(req.userId);
+
     const expenses = await Expense.find({ owner: req.userId }).sort({ date: -1 });
 
     res.status(200).json({

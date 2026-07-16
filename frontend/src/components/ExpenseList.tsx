@@ -20,6 +20,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Check";
 import CancelIcon from "@mui/icons-material/Close";
+import RepeatIcon from "@mui/icons-material/Repeat";
 import type { Expense, NewExpense } from "../api/expenseApi";
 
 const CATEGORIES = ["Food", "Transport", "Rent", "Entertainment", "Health", "Other"];
@@ -153,7 +154,16 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
                 ) : (
                   // ----- NORMAL (read-only) MODE for this row -----
                   <>
-                    <TableCell>{expense.title}</TableCell>
+                    <TableCell>
+                      {expense.title}
+                      {expense.isRecurring && (
+                        <RepeatIcon
+                          fontSize="inherit"
+                          sx={{ ml: 0.5, verticalAlign: "middle", opacity: 0.6 }}
+                          titleAccess="Recurring monthly template - deleting this stops future auto-adds"
+                        />
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Chip label={expense.category} size="small" />
                     </TableCell>

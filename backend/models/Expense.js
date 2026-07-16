@@ -36,6 +36,18 @@ const expenseSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,   // if you don't provide a date, use today automatically
     },
+    isRecurring: {
+      // If true, this expense acts as a TEMPLATE that regenerates itself
+      // every month, instead of being a single one-off transaction.
+      type: Boolean,
+      default: false,
+    },
+    nextDueDate: {
+      // Only meaningful when isRecurring is true - the next date this
+      // template should automatically generate a new expense entry.
+      type: Date,
+      default: null,
+    },
   },
   {
     // timestamps automatically adds "createdAt" and "updatedAt" fields

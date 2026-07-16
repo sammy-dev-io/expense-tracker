@@ -13,12 +13,15 @@ export interface Expense {
   category: string;
   date: string;
   createdAt: string;
+  isRecurring?: boolean;
+  nextDueDate?: string;
 }
 
 export interface NewExpense {
   title: string;
   amount: number;
   category: string;
+  isRecurring?: boolean;
 }
 
 // Every one of our protected backend routes now checks for a token in the

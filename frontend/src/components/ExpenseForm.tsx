@@ -10,6 +10,8 @@ import {
   Button,
   Paper,
   Typography,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import type { NewExpense } from "../api/expenseApi";
 
@@ -28,6 +30,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Food");
+  const [isRecurring, setIsRecurring] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault(); // stops the browser from doing a full page reload on submit
@@ -42,12 +45,14 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
       title: title.trim(),
       amount: Number(amount), // the input gives us a string - convert to a number
       category,
+      isRecurring,
     });
 
     // Reset the form back to empty after successful submit
     setTitle("");
     setAmount("");
     setCategory("Food");
+    setIsRecurring(false);
   };
 
   return (
@@ -90,6 +95,16 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
             </MenuItem>
           ))}
         </TextField>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+            />
+          }
+          label="Repeat monthly"
+        />
 
         <Button type="submit" variant="contained">
           Add Expense

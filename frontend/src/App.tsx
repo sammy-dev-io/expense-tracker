@@ -9,6 +9,7 @@ import {
   Tabs,
   Tab,
   Grid,
+  IconButton,
 } from "@mui/material";
 import ExpenseForm from "./components/ExpenseForm";
 import ExpenseList from "./components/ExpenseList";
@@ -21,6 +22,10 @@ import SavingsGoalList from "./components/SavingsGoalList";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
+import { useThemeMode } from "./context/ThemeContext";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import { alpha, useTheme } from "@mui/material/styles";
 import {
   getExpenses,
   createExpense,
@@ -47,6 +52,8 @@ import {
 
 function App() {
   const { user, logout } = useAuth();
+  const { mode, toggleMode } = useThemeMode();
+  const theme = useTheme();
   const [showRegister, setShowRegister] = useState(false);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -114,6 +121,17 @@ function App() {
   }, [user]);
 
   const handleAddExpense = async (newExpense: NewExpense) => {
+    // Prevent spending more than what's actually available. "balance" here
+    // already accounts for income, existing expenses, AND money set aside
+    // in savings goals - so this check reflects the REAL spendable amount,
+    // not just raw income.
+    if (newExpense.amount > balance) {
+      setError(
+        `You can't add this expense - it exceeds your available balance of ₦${balance.toLocaleString()}`
+      );
+      return;
+    }
+
     try {
       setError("");
       await createExpense(newExpense);
@@ -136,6 +154,23 @@ function App() {
   };
 
   const handleUpdateExpense = async (id: string, updates: NewExpense) => {
+    // Find the expense as it EXISTS RIGHT NOW, before this edit.
+    const existing = expenses.find((e) => e._id === id);
+
+    if (existing) {
+      // Only the INCREASE matters here. If you're editing a ₦2,000 expense
+      // down to ₦1,000, that's fine regardless of balance - you're freeing
+      // up money, not spending more. We only block it if the new amount is
+      // MORE than the old one, by more than what's currently available.
+      const increase = updates.amount - existing.amount;
+      if (increase > balance) {
+        setError(
+          `You can't increase this expense - it would exceed your available balance of ₦${balance.toLocaleString()}`
+        );
+        return;
+      }
+    }
+
     try {
       setError("");
       await updateExpense(id, updates);
@@ -228,7 +263,10 @@ function App() {
   // the actual list of expenses/income.
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalIncome = income.reduce((sum, i) => sum + i.amount, 0);
-  const balance = totalIncome - totalExpenses;
+  // Money already contributed toward savings goals is treated as "set aside" -
+  // no longer freely spendable, even though it hasn't left your account.
+  const totalSaved = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const balance = totalIncome - totalExpenses - totalSaved;
 
   if (!user) {
     return showRegister ? (
@@ -256,9 +294,14 @@ function App() {
             Welcome back, {user.name}
           </Typography>
         </Box>
-        <Button variant="outlined" onClick={logout}>
-          Log Out
-        </Button>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton onClick={toggleMode} color="inherit">
+            {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+          <Button variant="outlined" onClick={logout}>
+            Log Out
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -267,10 +310,19 @@ function App() {
         </Alert>
       )}
 
-      {/* Summary row: three side-by-side boxes showing Income, Expenses, Balance */}
+      {/* Summary row: four side-by-side boxes - Income, Expenses, Saved, Available Balance.
+          Colors use theme.palette + alpha() instead of fixed hex values, so they
+          automatically adjust their tint/opacity correctly in both light and dark mode -
+          a hardcoded "#e8f5e9" looks fine on a white background but muddy on a dark one. */}
       <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
-        <Grid size={4}>
-          <Paper elevation={2} sx={{ p: 2, background: "#e8f5e9" }}>
+        <Grid size={3}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              bgcolor: alpha(theme.palette.success.main, mode === "dark" ? 0.2 : 0.12),
+            }}
+          >
             <Typography variant="caption" color="text.secondary">
               Total Income
             </Typography>
@@ -279,8 +331,14 @@ function App() {
             </Typography>
           </Paper>
         </Grid>
-        <Grid size={4}>
-          <Paper elevation={2} sx={{ p: 2, background: "#ffebee" }}>
+        <Grid size={3}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              bgcolor: alpha(theme.palette.error.main, mode === "dark" ? 0.2 : 0.12),
+            }}
+          >
             <Typography variant="caption" color="text.secondary">
               Total Expenses
             </Typography>
@@ -289,13 +347,35 @@ function App() {
             </Typography>
           </Paper>
         </Grid>
-        <Grid size={4}>
+        <Grid size={3}>
           <Paper
             elevation={2}
-            sx={{ p: 2, background: balance >= 0 ? "#e3f2fd" : "#fff3e0" }}
+            sx={{
+              p: 2,
+              bgcolor: alpha(theme.palette.secondary.main, mode === "dark" ? 0.2 : 0.12),
+            }}
           >
             <Typography variant="caption" color="text.secondary">
-              Balance
+              Total Saved
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              ₦{totalSaved.toLocaleString()}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={3}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              bgcolor: alpha(
+                balance >= 0 ? theme.palette.info.main : theme.palette.warning.main,
+                mode === "dark" ? 0.2 : 0.12
+              ),
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              Available Balance
             </Typography>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               ₦{balance.toLocaleString()}
