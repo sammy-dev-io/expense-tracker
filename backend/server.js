@@ -1,6 +1,6 @@
 
-const dns = require("dns");
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
+// const dns = require("dns");
+// dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 
 // This is the entry point of our backend - the file we actually run
