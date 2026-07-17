@@ -1,6 +1,10 @@
 import axios from "axios";
 
-const AUTH_BASE_URL = "http://localhost:5000/api/auth";
+// import.meta.env.VITE_API_URL reads from the .env file - this is Vite's
+// way of injecting environment-specific values at build time. Locally it
+// points to your own machine; once deployed, we'll set this to your real
+// backend's live URL instead - the CODE itself never needs to change.
+const AUTH_BASE_URL = `${import.meta.env.VITE_API_URL}/auth`;
 
 export interface User {
   id: string;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, TextField, Button, Paper, Typography } from "@mui/material";
+import { Box, TextField, Button, Paper, Typography, Grid } from "@mui/material";
 import type { NewIncome } from "../api/incomeApi";
 
 interface IncomeFormProps {
@@ -33,30 +33,34 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ onAdd }) => {
         Add Income
       </Typography>
 
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}
-      >
-        <TextField
-          label="Source"
-          placeholder="e.g. Salary, Freelance"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-          size="small"
-        />
-
-        <TextField
-          label="Amount"
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          size="small"
-        />
-
-        <Button type="submit" variant="contained" color="success">
-          Add Income
-        </Button>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Source"
+              placeholder="e.g. Salary, Freelance"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              size="small"
+              fullWidth
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              size="small"
+              fullWidth
+            />
+          </Grid>
+          <Grid size={12}>
+            <Button type="submit" variant="contained" color="success">
+              Add Income
+            </Button>
+          </Grid>
+        </Grid>
       </Box>
     </Paper>
   );

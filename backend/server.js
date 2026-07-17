@@ -7,10 +7,6 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 // to start the server. Its job: connect to the database, set up
 // middleware, and tell Express which routes exist.
 
-// This is the entry point of our backend - the file we actually run
-// to start the server. Its job: connect to the database, set up
-// middleware, and tell Express which routes exist.
-
 require("dotenv").config(); // loads variables from .env into process.env
 
 const express = require("express");
@@ -28,10 +24,14 @@ const app = express();
 // ----- MIDDLEWARE -----
 // Middleware = code that runs on EVERY request, before it reaches your routes.
 
-app.use(cors());
-// ^ allows our React app (running on a different address, e.g. localhost:5173)
-//   to make requests to this server (e.g. localhost:5000) without the
-//   browser blocking it for security reasons.
+// In development, allow your local Vite server. In production, we'll set
+// CLIENT_URL to your real deployed frontend's URL via an environment
+// variable on your hosting platform - the code itself doesn't change.
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+  })
+);
 
 app.use(express.json());
 // ^ without this, req.body would be undefined when the frontend sends JSON data.

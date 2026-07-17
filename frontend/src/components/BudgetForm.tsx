@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, TextField, MenuItem, Button, Paper, Typography } from "@mui/material";
+import { Box, TextField, MenuItem, Button, Paper, Typography, Grid } from "@mui/material";
 
 const CATEGORIES = ["Food", "Transport", "Rent", "Entertainment", "Health", "Other"];
 
@@ -29,37 +29,40 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ onSave }) => {
         Set a Budget Limit
       </Typography>
 
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}
-      >
-        <TextField
-          label="Category"
-          select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          size="small"
-          sx={{ minWidth: 150 }}
-        >
-          {CATEGORIES.map((cat) => (
-            <MenuItem key={cat} value={cat}>
-              {cat}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          label="Monthly Limit"
-          type="number"
-          value={limitAmount}
-          onChange={(e) => setLimitAmount(e.target.value)}
-          size="small"
-        />
-
-        <Button type="submit" variant="contained">
-          Save Limit
-        </Button>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Category"
+              select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              size="small"
+              fullWidth
+            >
+              {CATEGORIES.map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Monthly Limit"
+              type="number"
+              value={limitAmount}
+              onChange={(e) => setLimitAmount(e.target.value)}
+              size="small"
+              fullWidth
+            />
+          </Grid>
+          <Grid size={12}>
+            <Button type="submit" variant="contained">
+              Save Limit
+            </Button>
+          </Grid>
+        </Grid>
       </Box>
     </Paper>
   );

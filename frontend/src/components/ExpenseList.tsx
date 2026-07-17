@@ -10,6 +10,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  TableContainer,
   IconButton,
   Typography,
   Chip,
@@ -84,7 +85,11 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
 
   return (
     <Paper elevation={3}>
-      <Table>
+      {/* TableContainer adds horizontal scrolling when the table is wider
+          than the screen - without it, a 5-column table simply gets cut off
+          and clipped on a narrow phone, with no way to see the hidden columns. */}
+      <TableContainer sx={{ overflowX: "auto" }}>
+        <Table>
         <TableHead>
           <TableRow>
             <TableCell>Title</TableCell>
@@ -195,7 +200,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
             );
           })}
         </TableBody>
-      </Table>
+        </Table>
+      </TableContainer>
     </Paper>
   );
 };

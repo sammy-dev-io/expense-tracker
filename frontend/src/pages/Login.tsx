@@ -46,10 +46,10 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f5f5f5",
+        background: (theme) => theme.palette.background.default,
       }}
     >
-      <Paper elevation={3} sx={{ p: 4, width: 360 }}>
+      <Paper elevation={3} sx={{ p: 4, width: 360, maxWidth: "90vw" }}>
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
           Welcome Back
         </Typography>

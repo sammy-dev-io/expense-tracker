@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api/budgets";
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/budgets`;
 
 export interface Budget {
   _id: string;

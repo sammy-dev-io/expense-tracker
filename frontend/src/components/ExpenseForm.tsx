@@ -12,6 +12,7 @@ import {
   Typography,
   FormControlLabel,
   Checkbox,
+  Grid,
 } from "@mui/material";
 import type { NewExpense } from "../api/expenseApi";
 
@@ -61,54 +62,65 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
         Add Expense
       </Typography>
 
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}
-      >
-        <TextField
-          label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          size="small"
-        />
-
-        <TextField
-          label="Amount"
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          size="small"
-        />
-
-        <TextField
-          label="Category"
-          select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          size="small"
-          sx={{ minWidth: 150 }}
-        >
-          {CATEGORIES.map((cat) => (
-            <MenuItem key={cat} value={cat}>
-              {cat}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={isRecurring}
-              onChange={(e) => setIsRecurring(e.target.checked)}
+      <Box component="form" onSubmit={handleSubmit}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          {/* Title + Amount paired on one row (from sm breakpoint up) */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              size="small"
+              fullWidth
             />
-          }
-          label="Repeat monthly"
-        />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              size="small"
+              fullWidth
+            />
+          </Grid>
 
-        <Button type="submit" variant="contained">
-          Add Expense
-        </Button>
+          {/* Category + recurring checkbox paired on the next row */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Category"
+              select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              size="small"
+              fullWidth
+            >
+              {CATEGORIES.map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isRecurring}
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                />
+              }
+              label="Repeat monthly"
+            />
+          </Grid>
+
+          {/* Button gets its own full-width row */}
+          <Grid size={12}>
+            <Button type="submit" variant="contained" fullWidth={false}>
+              Add Expense
+            </Button>
+          </Grid>
+        </Grid>
       </Box>
     </Paper>
   );

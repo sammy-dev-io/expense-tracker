@@ -6,6 +6,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  TableContainer,
   IconButton,
   Typography,
 } from "@mui/material";
@@ -30,37 +31,39 @@ const IncomeList: React.FC<IncomeListProps> = ({ income, onDelete }) => {
 
   return (
     <Paper elevation={3}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Source</TableCell>
-            <TableCell align="right">Amount</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell align="center">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {income.map((item) => (
-            <TableRow key={item._id} hover>
-              <TableCell>{item.source}</TableCell>
-              <TableCell align="right">
-                ₦{item.amount.toLocaleString()}
-              </TableCell>
-              <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
-              <TableCell align="center">
-                <IconButton
-                  color="error"
-                  size="small"
-                  onClick={() => onDelete(item._id)}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </TableCell>
+      <TableContainer sx={{ overflowX: "auto" }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Source</TableCell>
+              <TableCell align="right">Amount</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+
+          <TableBody>
+            {income.map((item) => (
+              <TableRow key={item._id} hover>
+                <TableCell>{item.source}</TableCell>
+                <TableCell align="right">
+                  ₦{item.amount.toLocaleString()}
+                </TableCell>
+                <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
+                <TableCell align="center">
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={() => onDelete(item._id)}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Paper>
   );
 };

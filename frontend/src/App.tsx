@@ -277,28 +277,52 @@ function App() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 5 }}>
+    <Container maxWidth="md" sx={{ py: { xs: 3, sm: 5 }, px: { xs: 2, sm: 3 } }}>
       <Box
         sx={{
           display: "flex",
+          // Stay on ONE row even on mobile - we just shrink the elements
+          // instead of stacking, so Logout/theme toggle stay visually
+          // anchored top-right next to the welcome text, not pushed below it.
+          flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 1,
           mb: 1,
+          flexWrap: "nowrap",
         }}
       >
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="h4"
+            noWrap
+            sx={{ fontWeight: 700, fontSize: { xs: "1.15rem", sm: "2.125rem" } }}
+          >
             Expense Tracker
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            noWrap
+            sx={{ fontSize: { xs: "0.7rem", sm: "0.875rem" } }}
+          >
             Welcome back, {user.name}
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton onClick={toggleMode} color="inherit">
-            {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
+          <IconButton
+            onClick={toggleMode}
+            color="inherit"
+            size="small"
+          >
+            {mode === "dark" ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
           </IconButton>
-          <Button variant="outlined" onClick={logout}>
+          <Button
+            variant="outlined"
+            onClick={logout}
+            size="small"
+            sx={{ fontSize: { xs: "0.7rem", sm: "0.875rem" }, px: { xs: 1, sm: 2 } }}
+          >
             Log Out
           </Button>
         </Box>
@@ -310,12 +334,11 @@ function App() {
         </Alert>
       )}
 
-      {/* Summary row: four side-by-side boxes - Income, Expenses, Saved, Available Balance.
-          Colors use theme.palette + alpha() instead of fixed hex values, so they
-          automatically adjust their tint/opacity correctly in both light and dark mode -
-          a hardcoded "#e8f5e9" looks fine on a white background but muddy on a dark one. */}
+      {/* Summary row: four boxes, but responsive - 2 per row on phones (xs),
+          4 per row from tablet size up (sm+). Without this, size={3} alone
+          forces 4 cramped tiny boxes on a narrow phone screen. */}
       <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
-        <Grid size={3}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={2}
             sx={{
@@ -331,7 +354,7 @@ function App() {
             </Typography>
           </Paper>
         </Grid>
-        <Grid size={3}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={2}
             sx={{
@@ -347,7 +370,7 @@ function App() {
             </Typography>
           </Paper>
         </Grid>
-        <Grid size={3}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={2}
             sx={{
@@ -363,7 +386,7 @@ function App() {
             </Typography>
           </Paper>
         </Grid>
-        <Grid size={3}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={2}
             sx={{
@@ -384,12 +407,15 @@ function App() {
         </Grid>
       </Grid>
 
-      {/* Tabs let the user switch between managing Expenses and Income,
-          without needing two separate pages/routes for something this simple. */}
+      {/* Tabs: scrollable + swipeable on small screens, since 4 tab labels
+          don't comfortably fit on a narrow phone width otherwise. */}
       <Tabs
         value={tab}
         onChange={(_, newValue) => setTab(newValue)}
         sx={{ mb: 3 }}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
       >
         <Tab label="Expenses" />
         <Tab label="Income" />
